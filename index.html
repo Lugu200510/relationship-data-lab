@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f8f4f0">
+<meta name="description" content="用 Stanford HCMST 公开随访数据探索线上相识后的结婚比例。">
+<title>网恋研究所 · HCMST 随访</title>
+<style>
+  :root { color-scheme: light; --paper:#f8f4f0; --ink:#2d2027; --muted:#695b62; --line:#e6dadc; --accent:#922e50; font-family:Inter,"PingFang SC","Microsoft YaHei",system-ui,sans-serif; }
+  *, *::before, *::after { box-sizing:border-box; }
+  body { margin:0; color:var(--ink); background:var(--paper); line-height:1.6; }
+  a { color:var(--accent); text-underline-offset:4px; }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:4px; }
+  h1,h2,p,fieldset,dl,dd { margin:0; }
+  .wrap { width:min(980px,calc(100% - 40px)); margin:auto; }
+  header { border-bottom:1px solid var(--line); }
+  .header { display:flex; justify-content:space-between; align-items:center; gap:12px; min-height:64px; }
+  .brand { display:flex; align-items:center; gap:9px; font-size:15px; font-weight:750; }
+  .brand span { display:grid; place-items:center; width:30px; height:30px; border-radius:10px; color:white; background:var(--accent); font:23px/1 "Segoe UI Symbol",sans-serif; }
+  .header a { font-size:13px; }
+  main { padding-block:42px 36px; }
+  .hero { position:relative; isolation:isolate; overflow:hidden; display:grid; grid-template-columns:1.1fr .9fr; align-items:center; gap:28px; padding:clamp(22px,5vw,50px); border-radius:22px; color:#fff5f7; background:radial-gradient(ellipse at 100% 0%,#622f47,transparent 62%),#301a29; }
+  .hero::before { content:""; position:absolute; inset:0; z-index:-1; background:radial-gradient(#ffd3df32 1px,transparent 1px) 0 0/16px 16px; mask-image:linear-gradient(90deg,transparent 30%,black); }
+  .source { font-size:12px; color:#f4afc2; letter-spacing:.08em; font-weight:650; }
+  h1 { margin-block:12px; font-size:clamp(29px,4.7vw,49px); line-height:1.19; letter-spacing:-.045em; }
+  .intro { max-width:31ch; color:#f3dce4; font-size:14px; }
+  fieldset { border:0; padding:0; min-width:0; margin-top:24px; }
+  legend { padding:0; margin-bottom:6px; font-size:12px; color:#f3dce4; }
+  .choices { display:inline-flex; flex-wrap:wrap; gap:3px; padding:4px; border:1px solid #ffcbdd47; border-radius:11px; background:#26111e65; }
+  .choices label { cursor:pointer; position:relative; }
+  .choices input { position:absolute; opacity:0; width:1px; height:1px; }
+  .choices span { display:block; padding:6px 11px; border-radius:7px; color:#f2d9e2; font-size:13px; transition:background .2s,color .2s; }
+  .choices input:checked + span { background:#f6cad6; color:#442334; font-weight:750; }
+  .choices input:focus-visible + span { outline:2px solid #ffe5ed; outline-offset:2px; }
+  .reading { padding:22px; border-radius:16px; border:1px solid #f6cad64b; background:#27142273; }
+  .reading p { color:#f6dbe3; font-size:13px; }
+  .rate { display:block; margin:6px 0 8px; color:#ffedf2; font-size:clamp(54px,8vw,88px); line-height:1.05; letter-spacing:-.08em; font-variant-numeric:tabular-nums; }
+  .track { margin-top:16px; height:7px; border-radius:12px; overflow:hidden; background:#fff1f127; }
+  .fill { display:block; width:100%; height:100%; transform-origin:left; transform:scaleX(var(--rate,0)); transition:transform .56s cubic-bezier(.22,.7,.3,1); border-radius:inherit; background:linear-gradient(90deg,#bd5577,#ffc5d4); }
+  .stats { display:grid; grid-template-columns:repeat(3,1fr); margin-block:22px; border:1px solid var(--line); border-radius:15px; background:#fffcfa; }
+  .stats div { min-width:0; padding:15px clamp(10px,3vw,23px); }
+  .stats div + div { border-left:1px solid var(--line); }
+  dt { font-size:12px; color:var(--muted); }
+  dd { font-size:clamp(18px,3vw,28px); font-weight:730; letter-spacing:-.04em; font-variant-numeric:tabular-nums; }
+  .breakdown { padding:20px clamp(14px,3.2vw,26px); border:1px solid var(--line); border-radius:15px; background:#fffcfa; }
+  h2 { font-size:18px; }
+  .breakdown > p, details p { color:var(--muted); font-size:13px; }
+  .bar { height:12px; display:flex; gap:2px; overflow:hidden; border-radius:12px; background:#eadfe4; margin-block:12px; }
+  .bar span { min-width:0; flex-basis:0; transition:flex-grow .56s cubic-bezier(.22,.7,.3,1); }
+  .married { background:#a93960; }
+  .unmarried { background:#dd9bb0; }
+  .unknown { background:#9c859a; }
+  .legend { display:flex; flex-wrap:wrap; column-gap:20px; row-gap:4px; color:var(--muted); font-size:12px; }
+  .legend span { display:flex; align-items:center; gap:6px; }
+  .legend i { width:8px; height:8px; border-radius:50%; }
+  details { margin-top:17px; padding-top:11px; border-top:1px solid var(--line); }
+  summary { cursor:pointer; font-size:13px; font-weight:700; color:var(--accent); }
+  details p { margin-top:7px; }
+  @media(max-width:640px) {
+    main { padding-top:20px; }
+    .hero { grid-template-columns:1fr; gap:18px; }
+    .reading { padding:16px; }
+    .stats div { padding-block:11px; }
+    .stats dd { font-size:clamp(14px,4.2vw,23px); }
+  }
+  @media(prefers-reduced-motion:reduce) { *, *::before, *::after { transition:none !important; } }
+</style>
+</head>
+<body>
+<header><div class="wrap header"><div class="brand"><span aria-hidden="true">♡</span>网恋研究所</div><a href="https://data.stanford.edu/hcmst2017">Stanford 数据来源 ↗</a></div></header>
+<main class="wrap">
+  <section class="hero" aria-labelledby="title">
+    <div>
+      <p class="source">HCMST · 2017 基线 / 2020、2022 随访</p>
+      <h1 id="title">网恋多久会结婚？</h1>
+      <p class="intro">从恋爱关系开始算起，查看线上结识的美国伴侣在不同期限内报告结婚的比例。</p>
+      <fieldset><legend>观察期限</legend><div class="choices">
+        <label><input type="radio" name="horizon" value="12"><span>12 个月</span></label>
+        <label><input type="radio" name="horizon" value="24" checked><span>24 个月</span></label>
+        <label><input type="radio" name="horizon" value="36"><span>36 个月</span></label>
+      </div></fieldset>
+    </div>
+    <div class="reading" aria-live="polite" aria-atomic="true">
+      <p id="window-label">24 个月内结婚 · 未加权</p>
+      <strong class="rate" id="rate">19.1%</strong>
+      <p id="fraction">61 / 319 条可判定记录</p>
+      <div class="track" aria-hidden="true"><span class="fill" id="rate-fill"></span></div>
+    </div>
+  </section>
+
+  <dl class="stats">
+    <div><dt>筛选样本</dt><dd id="total">385 条</dd></div>
+    <div><dt>95% Wilson 区间</dt><dd id="interval">15.2%–23.8%</dd></div>
+    <div><dt>基线加权比例</dt><dd id="weighted">24.6%</dd></div>
+  </dl>
+
+  <section class="breakdown" aria-labelledby="outcomes">
+    <h2 id="outcomes">结局分布</h2>
+    <p id="missing">日期不足 17 条，随访不足 49 条。</p>
+    <div class="bar" aria-hidden="true"><span class="married" id="yes-bar"></span><span class="unmarried" id="no-bar"></span><span class="unknown" id="unknown-bar"></span></div>
+    <div class="legend">
+      <span><i class="married"></i>结婚 <b id="yes-count">61</b></span>
+      <span><i class="unmarried"></i>未报告结婚 <b id="no-count">258</b></span>
+      <span><i class="unknown"></i>无法判定 <b id="unknown-count">66</b></span>
+    </div>
+    <details><summary>统计口径与缺失结局</summary>
+      <p id="bounds"></p>
+      <p>样本为 2017 年受访者报告的当时伴侣或最近一位前伴侣，双方线上接触前互不认识。恋爱开始和结婚按年月比较，包含截止月。只用能对应原伴侣的随访记录。日期不足或失访时，结局可能无法判定。</p>
+      <p>Wilson 区间及基线加权比例均基于可判定记录。选择偏差和失访仍会影响估计。数据来自 Rosenfeld、Thomas 和 Hausen 的 HCMST v2.2。</p>
+    </details>
+  </section>
+</main>
+<script>
+// Generated by reproduce_hcmst.py. Aggregate counts only.
+const HCMST = {
+  "version": "2.2",
+  "surveySize": 3510,
+  "onlineFlag": 475,
+  "sampleSize": 385,
+  "sha256": "a76c1ef8e14a69951db3d71142dfb3866063c7af8d0da67942b744e2727aeb56",
+  "results": [
+    {
+      "months": 12,
+      "yes": 28,
+      "no": 312,
+      "dateUnknown": 12,
+      "followupUnknown": 33,
+      "baseline": 307,
+      "wave2": 30,
+      "wave3": 3,
+      "weightedRate": 0.10503495074727269
+    },
+    {
+      "months": 24,
+      "yes": 61,
+      "no": 258,
+      "dateUnknown": 17,
+      "followupUnknown": 49,
+      "baseline": 273,
+      "wave2": 42,
+      "wave3": 4,
+      "weightedRate": 0.2455418329416434
+    },
+    {
+      "months": 36,
+      "yes": 85,
+      "no": 230,
+      "dateUnknown": 17,
+      "followupUnknown": 53,
+      "baseline": 261,
+      "wave2": 50,
+      "wave3": 4,
+      "weightedRate": 0.3380632571679053
+    }
+  ]
+};
+const put = (id, value) => { document.getElementById(id).textContent = value; };
+const pct = (value) => `${(100 * value).toFixed(1)}%`;
+
+function wilson(positive, total) {
+  const p = positive / total;
+  const z = 1.95996398454;
+  const scale = 1 + z ** 2 / total;
+  const center = (p + z ** 2 / (2 * total)) / scale;
+  const radius = z * Math.sqrt(p * (1 - p) / total + z ** 2 / (4 * total ** 2)) / scale;
+  return [center - radius, center + radius].map(pct).join('–');
+}
+
+function render(months, animate = true) {
+  const { yes, no, dateUnknown, followupUnknown, weightedRate } = HCMST.results.find((row) => row.months === months);
+  const unknown = dateUnknown + followupUnknown;
+  const known = yes + no;
+  const total = HCMST.sampleSize;
+  put('window-label', `${months} 个月内结婚 · 未加权`);
+  put('rate', pct(yes / known));
+  put('fraction', `${yes} / ${known} 条可判定记录`);
+  put('total', `${total} 条`);
+  put('interval', wilson(yes, known));
+  put('weighted', pct(weightedRate));
+  put('missing', `日期不足 ${dateUnknown} 条，随访不足 ${followupUnknown} 条。`);
+  put('bounds', `用全部 ${total} 条作分母，把未知结局全部算作未结婚或全部算作已结婚，两个极端比例为 ${pct(yes / total)} 和 ${pct((yes + unknown) / total)}。`);
+  for (const [key, value] of Object.entries({ yes, no, unknown })) {
+    put(`${key}-count`, value);
+    document.getElementById(`${key}-bar`).style.flexGrow = value;
+  }
+  document.getElementById('rate-fill').style.setProperty('--rate', yes / known);
+  const rate = document.getElementById('rate');
+  for (const motion of rate.getAnimations()) motion.cancel();
+  if (animate && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    rate.animate([{ opacity:.5, transform:'translateY(4px)' }, { opacity:1, transform:'translateY(0)' }], { duration:260, easing:'ease-out' });
+  }
+}
+
+for (const option of document.querySelectorAll('input[name="horizon"]')) {
+  option.addEventListener('change', () => render(Number(option.value)));
+}
+render(Number(document.querySelector('input[name="horizon"]:checked').value), false);
+</script>
+</body>
+</html>
+
+
